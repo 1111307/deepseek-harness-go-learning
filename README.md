@@ -16,7 +16,13 @@ deepseek-harness-go-learning/
 ├── agent-loop/               # 第 3 章：agent 核心驱动循环
 │   ├── main.go
 │   └── README.md
-└── sandbox/                  # 第 4 章：进程隔离 + 文件策略 + 升级
+├── sandbox/                  # 第 4 章：进程隔离 + 文件策略 + 升级
+│   ├── main.go
+│   └── README.md
+├── capability-seam/          # 第 5 章：Service Definition / Provider / Consumer
+│   ├── main.go
+│   └── README.md
+└── plugin-runtime/           # 第 6 章：一切皆插件 + 注册即 effect + 作用域
     ├── main.go
     └── README.md
 ```
@@ -88,10 +94,46 @@ deepseek-harness-go-learning/
 
 **运行**：`cd sandbox && go run main.go`
 
-## 待补章节
+### 第 5 章：Capability Seam（Service Definition / Provider / Consumer）
 
-- `capability-seam`：Service Definition / Provider / Consumer 三件套
-- `plugin-runtime`：Cordis 插件化、注册即 effect、作用域上下文
+**讲什么**：一个可替换的能力怎么被拆成三个独立演化的角色——「一切皆插件」的地基。
+
+**复现的机制**（对照 `packages/shell/*` 三件套）：
+
+- 三角色结构（Service Definition 接口 / Provider 注册 / Consumer 注入）
+- Service Definition 是 Cordis Service 抽象类，不是 interface
+- 注册即 effect（一个 key 一个实现，重复 fail-loud）+ Consumer 只依赖接口
+- resolve(request): Spec 显式默认值 + cap
+- 换 Provider 不动 Consumer（local → sandbox）
+
+**运行**：`cd capability-seam && go run main.go`
+
+### 第 6 章：Plugin Runtime（一切皆插件 + 注册即 effect + 作用域）
+
+**讲什么**：vendored Cordis 插件框架——前面所有章节赖以生长的运行时骨架。
+
+**复现的机制**（对照 `vendor/cordis/src/*` + `packages/core/scope/*`）：
+
+- Context 服务仓库（ctx.<key>）+ inject 依赖声明 + 重复注册 fail-loud
+- 注册即 effect（ctx.effect 返回 disposer，卸载反转顺序）
+- 五种 dispatch（emit / waterfall / serial / bail，waterfall 重点）
+- waterfall 的 next() 委托 + 短路 + 值传播
+- 作用域链（scopeParents）+ 事件向上流动、绝不向下
+
+**运行**：`cd plugin-runtime && go run main.go`
+
+## 全章回顾
+
+六章从外到内覆盖了 deepseek-harness 的核心设计：
+
+1. **human-in-the-loop** — 服务端如何停下来等人工决策
+2. **context-compaction** — 长对话如何在预算内压缩
+3. **agent-loop** — turn/step 双层循环驱动模型-工具来回
+4. **sandbox** — 两层隔离（内核进程约束 + 进程内 fs 栅栏）+ 升级
+5. **capability-seam** — 能力拆成 Service Definition / Provider / Consumer
+6. **plugin-runtime** — 一切皆插件 + 注册即 effect + 作用域
+
+建议阅读顺序：6（骨架）→ 5（能力接缝）→ 3（循环）→ 1（人环）→ 2（压缩）→ 4（沙箱），由底层结构到具体机制层层递进。
 
 ## 约定
 
